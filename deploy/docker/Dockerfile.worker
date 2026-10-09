@@ -1,0 +1,30 @@
+# =========================================================================
+# DOCKERFILE: SLOWSOCIAL WORKER (Kafka + FFmpeg)
+# Multi-stage build com FFmpeg nativo
+# =========================================================================
+
+# Estágio 1: Compilação
+FROM golang:1.23-alpine AS builder
+
+WORKDIR /app
+
+RUN apk add --no-cache ca-certificates git
+
+COPY backend/go.mod backend/go.sum* ./
+RUN go mod download || true
+
+COPY backend/ ./
+
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o /app/bin/worker ./cmd/worker
+
+# Estágio 2: Imagem com FFmpeg
+FROM alpine:3.20
+
+WORKDIR /app
+
+# Instalar FFmpeg e dependências de áudio/vídeo
+RUN apk add --no-cache ca-certificates tzdata ffmpeg
+
+COPY --from=builder /app/bin/worker /app/worker
+
+ENTRYPOINT ["/app/worker"]

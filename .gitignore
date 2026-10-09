@@ -7,19 +7,48 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Dependencies
+# Node / Web dependencies & builds
 node_modules/
-
-# Production build
 dist/
 dist-ssr/
+legacy-prototype/node_modules/
+legacy-prototype/dist/
 
-# Local env files
+# Go build artifacts
+backend/bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+vendor/
+
+# Flutter / Dart
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.packages
+mobile/.pub-cache/
+mobile/.pub/
+mobile/build/
+mobile/ios/Flutter/Generated.xcconfig
+mobile/ios/Flutter/flutter_export_environment.sh
+mobile/android/local.properties
+mobile/android/.gradle/
+
+# Local data & Docker volumes
+deploy/data/
+deploy/minio_data/
+deploy/postgres_data/
+deploy/redis_data/
+deploy/kafka_data/
+
+# Environment files
 .env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*.local
 
 # Editor directories and files
 .vscode/*
@@ -33,4 +62,3 @@ Thumbs.db
 *.sln
 *.sw?
 *.tsbuildinfo
-

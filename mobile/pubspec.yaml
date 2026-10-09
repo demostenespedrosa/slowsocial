@@ -1,0 +1,51 @@
+name: slowsocial_mobile
+description: "SlowSocial — Rede Social Consciente e Calma para Android e iOS"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Arquitetura & Gerenciamento de Estado
+  flutter_riverpod: ^2.5.1
+  go_router: ^14.2.0
+
+  # Comunicação HTTP & WebSockets
+  dio: ^5.5.0
+  web_socket_channel: ^3.0.0
+
+  # Autenticação Supabase
+  supabase_flutter: ^2.6.0
+
+  # Notificações Push Firebase Cloud Messaging (FCM)
+  firebase_core: ^3.3.0
+  firebase_messaging: ^15.0.4
+
+  # Mídia, Áudio e Vídeo
+  video_player: ^2.9.1
+  audioplayers: ^6.0.0
+  cached_network_image: ^3.3.1
+
+  # Animações Lottie & Ícones
+  lottie: ^3.1.2
+  cupertino_icons: ^1.0.8
+  lucide_icons: ^0.257.0
+  google_fonts: ^6.2.1
+
+  # Armazenamento Local e Preferências
+  shared_preferences: ^2.2.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/lotties/
+    - assets/icons/
