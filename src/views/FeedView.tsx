@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Post, User, Momento, AspectRatio } from '../types';
 import { Badge } from '../components/ui/Badge';
 import { MomentosBar } from '../components/MomentosBar';
@@ -1123,261 +1124,268 @@ export const FeedView: React.FC<FeedViewProps> = ({
       </div>
 
       {/* 5. Apple iOS Bottom Sheet Modal de Comentários */}
-      {activeCommentsPost && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-start justify-center sm:pt-12 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
+      {activeCommentsPost &&
+        createPortal(
           <div
-            className="fixed inset-0"
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200"
             onClick={() => {
               setActiveCommentsPostId(null);
               setReplyingToAuthor(null);
             }}
-          />
-
-          <div
-            className={`relative w-full sm:max-w-xl h-[84vh] sm:h-[80vh] rounded-t-[32px] sm:rounded-[32px] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-250 z-10 border ${
-              isDark
-                ? 'bg-[#1C1C1E] border-white/10'
-                : 'bg-[#F2F2F7] border-black/10'
-            }`}
           >
-            {/* Grabber Handle Nativo Apple */}
-            <div className="pt-3 pb-1 flex justify-center shrink-0">
-              <div className={`w-10 h-1.5 rounded-full ${isDark ? 'bg-white/20' : 'bg-black/20'}`} />
-            </div>
-
-            {/* Header */}
             <div
-              className={`px-6 py-3.5 border-b flex items-center justify-between shrink-0 ${
-                isDark ? 'border-white/[0.08]' : 'border-black/[0.06]'
+              onClick={(e) => e.stopPropagation()}
+              className={`w-full sm:max-w-xl h-[85vh] sm:h-[80vh] rounded-t-[32px] sm:rounded-[32px] shadow-2xl flex flex-col overflow-hidden z-10 border transition-all ${
+                isDark
+                  ? 'bg-[#1C1C1E] border-white/10'
+                  : 'bg-[#F2F2F7] border-black/10'
               }`}
             >
-              <div>
-                <h3 className={`text-[17px] font-bold tracking-tight ${isDark ? 'text-white' : 'text-black'}`}>
-                  Comentários & Debate
-                </h3>
-                <p className={`text-[13px] ${isDark ? 'text-[#8E8E93]' : 'text-[#636366]'}`}>
-                  {activeCommentsPost.comments.length}{' '}
-                  {activeCommentsPost.comments.length === 1 ? 'contribuição aprofundada' : 'contribuições aprofundadas'}
-                </p>
+              {/* Grabber Handle Nativo Apple */}
+              <div className="pt-3 pb-1 flex justify-center shrink-0">
+                <div className={`w-10 h-1.5 rounded-full ${isDark ? 'bg-white/20' : 'bg-black/20'}`} />
               </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveCommentsPostId(null);
-                  setReplyingToAuthor(null);
-                }}
-                className={`p-2 rounded-full transition-colors ${
-                  isDark
-                    ? 'text-[#8E8E93] hover:text-white hover:bg-white/[0.08]'
-                    : 'text-[#636366] hover:text-black hover:bg-black/[0.06]'
+              {/* Header */}
+              <div
+                className={`px-6 py-3.5 border-b flex items-center justify-between shrink-0 ${
+                  isDark ? 'border-white/[0.08]' : 'border-black/[0.06]'
                 }`}
               >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Lista de Comentários */}
-            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3.5">
-              {activeCommentsPost.comments.length === 0 ? (
-                <div className="py-20 text-center space-y-2.5">
-                  <div
-                    className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto border ${
-                      isDark
-                        ? 'bg-white/[0.04] border-white/[0.08] text-[#8E8E93]'
-                        : 'bg-black/[0.04] border-black/[0.06] text-[#636366]'
-                    }`}
-                  >
-                    <MessageSquare size={22} />
-                  </div>
-                  <p className={`text-[16px] font-semibold ${isDark ? 'text-white' : 'text-black'}`}>
-                    Nenhum comentário ainda
-                  </p>
-                  <p className={`text-[13.5px] max-w-xs mx-auto ${isDark ? 'text-[#8E8E93]' : 'text-[#636366]'}`}>
-                    Seja a primeira pessoa a agregar uma visão técnica ou reflexão construtiva a este debate.
+                <div>
+                  <h3 className={`text-[17px] font-bold tracking-tight ${isDark ? 'text-white' : 'text-black'}`}>
+                    Comentários & Debate
+                  </h3>
+                  <p className={`text-[13px] ${isDark ? 'text-[#8E8E93]' : 'text-[#636366]'}`}>
+                    {activeCommentsPost.comments.length}{' '}
+                    {activeCommentsPost.comments.length === 1 ? 'contribuição aprofundada' : 'contribuições aprofundadas'}
                   </p>
                 </div>
-              ) : (
-                activeCommentsPost.comments.map((comm) => (
-                  <div
-                    key={comm.id}
-                    className={`rounded-[20px] p-4.5 space-y-2 border ${
-                      isDark
-                        ? 'bg-[#2C2C2E] border-white/[0.06]'
-                        : 'bg-white border-black/[0.04] shadow-[0_2px_8px_rgba(0,0,0,0.02)]'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <img
-                          src={comm.author.avatar}
-                          alt={comm.author.name}
-                          className="w-7 h-7 rounded-full object-cover"
-                        />
-                        <span className={`text-[14.5px] font-bold ${isDark ? 'text-white' : 'text-black'}`}>
-                          {comm.author.name}
-                        </span>
-                        {comm.authorRole && <Badge type={comm.authorRole} />}
-                      </div>
-                      <span className={`text-[12px] ${isDark ? 'text-[#8E8E93]' : 'text-[#636366]'}`}>
-                        {comm.createdAt}
-                      </span>
-                    </div>
-
-                    <p className={`leading-relaxed text-[15px] ${isDark ? 'text-[#E5E5EA]' : 'text-[#1C1C1E]'}`}>
-                      {comm.content}
-                    </p>
-
-                    <button
-                      type="button"
-                      onClick={() => setReplyingToAuthor(comm.author.name)}
-                      className={`text-[12.5px] font-semibold transition-colors pt-1 block ${
-                        isDark ? 'text-[#A390E4]' : 'text-[#7C65C1]'
-                      }`}
-                    >
-                      Responder
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {/* Rodapé Fixo */}
-            <div
-              className={`p-4 border-t shrink-0 space-y-2.5 ${
-                isDark ? 'bg-[#1C1C1E] border-white/[0.08]' : 'bg-white border-black/[0.06]'
-              }`}
-            >
-              {replyingToAuthor && (
-                <div
-                  className={`flex items-center justify-between text-[13px] px-3.5 py-1.5 rounded-[12px] border ${
-                    isDark
-                      ? 'bg-[#A390E4]/15 text-[#D2C7F5] border-[#A390E4]/30'
-                      : 'bg-[#7C65C1]/12 text-[#5E47A3] border-[#7C65C1]/25'
-                  }`}
-                >
-                  <span>Respondendo a <strong>@{replyingToAuthor}</strong></span>
-                  <button onClick={() => setReplyingToAuthor(null)}>
-                    <X size={15} />
-                  </button>
-                </div>
-              )}
-
-              <div className="flex items-end gap-3">
-                <img
-                  src={currentUser.avatar}
-                  alt={currentUser.name}
-                  className="w-9 h-9 rounded-full object-cover shrink-0 mb-1"
-                />
-
-                <textarea
-                  rows={2}
-                  value={modalCommentText}
-                  onChange={(e) => setModalCommentText(e.target.value)}
-                  placeholder="Escreva sua reflexão com clareza..."
-                  className={`flex-1 rounded-[16px] p-3 text-[14px] focus:outline-none resize-none leading-relaxed border transition-colors ${
-                    isDark
-                      ? 'bg-[#2C2C2E] border-white/[0.08] focus:border-[#A390E4] text-white placeholder-[#8E8E93]'
-                      : 'bg-[#F2F2F7] border-black/[0.06] focus:border-[#7C65C1] text-black placeholder-[#8E8E93]'
-                  }`}
-                />
 
                 <button
                   type="button"
-                  onClick={() => handleSendModalComment(activeCommentsPost.id)}
-                  disabled={!modalCommentText.trim()}
-                  className={`px-4 py-3 rounded-[16px] text-[14px] font-semibold text-white flex items-center gap-1.5 transition-all shrink-0 mb-1 shadow-sm active:scale-95 ${
+                  onClick={() => {
+                    setActiveCommentsPostId(null);
+                    setReplyingToAuthor(null);
+                  }}
+                  className={`p-2 rounded-full transition-colors ${
                     isDark
-                      ? 'bg-[#A390E4] hover:bg-[#9887C4] disabled:opacity-40'
-                      : 'bg-[#7C65C1] hover:bg-[#6C55B1] disabled:opacity-40'
+                      ? 'text-[#8E8E93] hover:text-white hover:bg-white/[0.08]'
+                      : 'text-[#636366] hover:text-black hover:bg-black/[0.06]'
                   }`}
                 >
-                  <Send size={15} />
-                  <span className="hidden sm:inline">Enviar</span>
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Lista de Comentários */}
+              <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3.5">
+                {activeCommentsPost.comments.length === 0 ? (
+                  <div className="py-20 text-center space-y-2.5">
+                    <div
+                      className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto border ${
+                        isDark
+                          ? 'bg-white/[0.04] border-white/[0.08] text-[#8E8E93]'
+                          : 'bg-black/[0.04] border-black/[0.06] text-[#636366]'
+                      }`}
+                    >
+                      <MessageSquare size={22} />
+                    </div>
+                    <p className={`text-[16px] font-semibold ${isDark ? 'text-white' : 'text-black'}`}>
+                      Nenhum comentário ainda
+                    </p>
+                    <p className={`text-[13.5px] max-w-xs mx-auto ${isDark ? 'text-[#8E8E93]' : 'text-[#636366]'}`}>
+                      Seja a primeira pessoa a agregar uma visão técnica ou reflexão construtiva a este debate.
+                    </p>
+                  </div>
+                ) : (
+                  activeCommentsPost.comments.map((comm) => (
+                    <div
+                      key={comm.id}
+                      className={`rounded-[20px] p-4.5 space-y-2 border ${
+                        isDark
+                          ? 'bg-[#2C2C2E] border-white/[0.06]'
+                          : 'bg-white border-black/[0.04] shadow-[0_2px_8px_rgba(0,0,0,0.02)]'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <img
+                            src={comm.author.avatar}
+                            alt={comm.author.name}
+                            className="w-7 h-7 rounded-full object-cover"
+                          />
+                          <span className={`text-[14.5px] font-bold ${isDark ? 'text-white' : 'text-black'}`}>
+                            {comm.author.name}
+                          </span>
+                          {comm.authorRole && <Badge type={comm.authorRole} />}
+                        </div>
+                        <span className={`text-[12px] ${isDark ? 'text-[#8E8E93]' : 'text-[#636366]'}`}>
+                          {comm.createdAt}
+                        </span>
+                      </div>
+
+                      <p className={`leading-relaxed text-[15px] ${isDark ? 'text-[#E5E5EA]' : 'text-[#1C1C1E]'}`}>
+                        {comm.content}
+                      </p>
+
+                      <button
+                        type="button"
+                        onClick={() => setReplyingToAuthor(comm.author.name)}
+                        className={`text-[12.5px] font-semibold transition-colors pt-1 block ${
+                          isDark ? 'text-[#A390E4]' : 'text-[#7C65C1]'
+                        }`}
+                      >
+                        Responder
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Rodapé Fixo */}
+              <div
+                className={`p-4 border-t shrink-0 space-y-2.5 ${
+                  isDark ? 'bg-[#1C1C1E] border-white/[0.08]' : 'bg-white border-black/[0.06]'
+                }`}
+              >
+                {replyingToAuthor && (
+                  <div
+                    className={`flex items-center justify-between text-[13px] px-3.5 py-1.5 rounded-[12px] border ${
+                      isDark
+                        ? 'bg-[#A390E4]/15 text-[#D2C7F5] border-[#A390E4]/30'
+                        : 'bg-[#7C65C1]/12 text-[#5E47A3] border-[#7C65C1]/25'
+                    }`}
+                  >
+                    <span>Respondendo a <strong>@{replyingToAuthor}</strong></span>
+                    <button onClick={() => setReplyingToAuthor(null)}>
+                      <X size={15} />
+                    </button>
+                  </div>
+                )}
+
+                <div className="flex items-end gap-3">
+                  <img
+                    src={currentUser.avatar}
+                    alt={currentUser.name}
+                    className="w-9 h-9 rounded-full object-cover shrink-0 mb-1"
+                  />
+
+                  <textarea
+                    rows={2}
+                    value={modalCommentText}
+                    onChange={(e) => setModalCommentText(e.target.value)}
+                    placeholder="Escreva sua reflexão com clareza..."
+                    className={`flex-1 rounded-[16px] p-3 text-[14px] focus:outline-none resize-none leading-relaxed border transition-colors ${
+                      isDark
+                        ? 'bg-[#2C2C2E] border-white/[0.08] focus:border-[#A390E4] text-white placeholder-[#8E8E93]'
+                        : 'bg-[#F2F2F7] border-black/[0.06] focus:border-[#7C65C1] text-black placeholder-[#8E8E93]'
+                    }`}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => handleSendModalComment(activeCommentsPost.id)}
+                    disabled={!modalCommentText.trim()}
+                    className={`px-4 py-3 rounded-[16px] text-[14px] font-semibold text-white flex items-center gap-1.5 transition-all shrink-0 mb-1 shadow-sm active:scale-95 ${
+                      isDark
+                        ? 'bg-[#A390E4] hover:bg-[#9887C4] disabled:opacity-40'
+                        : 'bg-[#7C65C1] hover:bg-[#6C55B1] disabled:opacity-40'
+                    }`}
+                  >
+                    <Send size={15} />
+                    <span className="hidden sm:inline">Enviar</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+
+      {/* 6. Modal: Compartilhar com Nota Pessoal */}
+      {quoteNotePost &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-5 pt-[max(env(safe-area-inset-top),20px)] sm:pt-14 overflow-y-auto bg-black/60 backdrop-blur-md animate-in fade-in duration-150"
+            onClick={() => setQuoteNotePost(null)}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className={`border rounded-[28px] w-full max-w-lg p-6 space-y-4 shadow-2xl ${
+                isDark
+                  ? 'bg-[#1C1C1E] border-white/10'
+                  : 'bg-white border-black/10'
+              }`}
+            >
+              <div
+                className={`flex items-center justify-between pb-3 border-b ${
+                  isDark ? 'border-white/[0.08]' : 'border-black/[0.06]'
+                }`}
+              >
+                <h3 className={`text-[17px] font-bold ${isDark ? 'text-white' : 'text-black'}`}>
+                  Compartilhar com Nota Pessoal
+                </h3>
+                <button
+                  onClick={() => setQuoteNotePost(null)}
+                  className={isDark ? 'text-[#8E8E93] hover:text-white' : 'text-[#636366] hover:text-black'}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <textarea
+                rows={3}
+                value={quoteText}
+                onChange={(e) => setQuoteText(e.target.value)}
+                placeholder="Adicione sua perspectiva e contexto antes de referenciar esta postagem..."
+                className={`w-full rounded-[16px] p-3.5 text-[14px] focus:outline-none resize-none leading-relaxed border ${
+                  isDark
+                    ? 'bg-[#2C2C2E] border-white/[0.08] focus:border-[#A390E4] text-white placeholder-[#8E8E93]'
+                    : 'bg-[#F2F2F7] border-black/[0.06] focus:border-[#7C65C1] text-black placeholder-[#8E8E93]'
+                }`}
+              />
+
+              <div
+                className={`p-4 rounded-[16px] border text-[13.5px] space-y-1.5 ${
+                  isDark
+                    ? 'bg-[#2C2C2E] border-white/[0.06]'
+                    : 'bg-[#F2F2F7] border-black/[0.04]'
+                }`}
+              >
+                <span className={`font-bold ${isDark ? 'text-white' : 'text-black'}`}>
+                  {quoteNotePost.author.name}
+                </span>
+                <p className={`line-clamp-2 ${isDark ? 'text-[#8E8E93]' : 'text-[#636366]'}`}>
+                  {quoteNotePost.content}
+                </p>
+              </div>
+
+              <div className="flex justify-end gap-2.5 pt-2">
+                <button
+                  onClick={() => setQuoteNotePost(null)}
+                  className={`px-4 py-2 text-[14px] font-medium transition-colors ${
+                    isDark ? 'text-[#8E8E93] hover:text-white' : 'text-[#636366] hover:text-black'
+                  }`}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    setQuoteNotePost(null);
+                    setQuoteText('');
+                  }}
+                  className={`px-5 py-2.5 text-white rounded-[14px] text-[14px] font-semibold transition-all shadow-sm active:scale-95 ${
+                    isDark ? 'bg-[#A390E4] hover:bg-[#9887C4]' : 'bg-[#7C65C1] hover:bg-[#6C55B1]'
+                  }`}
+                >
+                  Publicar com Nota
                 </button>
               </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* 6. Modal: Compartilhar com Nota Pessoal */}
-      {quoteNotePost && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-5 pt-[max(env(safe-area-inset-top),20px)] sm:pt-14 overflow-y-auto bg-black/60 backdrop-blur-md animate-in fade-in duration-150">
-          <div
-            className={`border rounded-[28px] w-full max-w-lg p-6 space-y-4 shadow-2xl ${
-              isDark
-                ? 'bg-[#1C1C1E] border-white/10'
-                : 'bg-white border-black/10'
-            }`}
-          >
-            <div
-              className={`flex items-center justify-between pb-3 border-b ${
-                isDark ? 'border-white/[0.08]' : 'border-black/[0.06]'
-              }`}
-            >
-              <h3 className={`text-[17px] font-bold ${isDark ? 'text-white' : 'text-black'}`}>
-                Compartilhar com Nota Pessoal
-              </h3>
-              <button
-                onClick={() => setQuoteNotePost(null)}
-                className={isDark ? 'text-[#8E8E93] hover:text-white' : 'text-[#636366] hover:text-black'}
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <textarea
-              rows={3}
-              value={quoteText}
-              onChange={(e) => setQuoteText(e.target.value)}
-              placeholder="Adicione sua perspectiva e contexto antes de referenciar esta postagem..."
-              className={`w-full rounded-[16px] p-3.5 text-[14px] focus:outline-none resize-none leading-relaxed border ${
-                isDark
-                  ? 'bg-[#2C2C2E] border-white/[0.08] focus:border-[#A390E4] text-white placeholder-[#8E8E93]'
-                  : 'bg-[#F2F2F7] border-black/[0.06] focus:border-[#7C65C1] text-black placeholder-[#8E8E93]'
-              }`}
-            />
-
-            <div
-              className={`p-4 rounded-[16px] border text-[13.5px] space-y-1.5 ${
-                isDark
-                  ? 'bg-[#2C2C2E] border-white/[0.06]'
-                  : 'bg-[#F2F2F7] border-black/[0.04]'
-              }`}
-            >
-              <span className={`font-bold ${isDark ? 'text-white' : 'text-black'}`}>
-                {quoteNotePost.author.name}
-              </span>
-              <p className={`line-clamp-2 ${isDark ? 'text-[#8E8E93]' : 'text-[#636366]'}`}>
-                {quoteNotePost.content}
-              </p>
-            </div>
-
-            <div className="flex justify-end gap-2.5 pt-2">
-              <button
-                onClick={() => setQuoteNotePost(null)}
-                className={`px-4 py-2 text-[14px] font-medium transition-colors ${
-                  isDark ? 'text-[#8E8E93] hover:text-white' : 'text-[#636366] hover:text-black'
-                }`}
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => {
-                  setQuoteNotePost(null);
-                  setQuoteText('');
-                }}
-                className={`px-5 py-2.5 text-white rounded-[14px] text-[14px] font-semibold transition-all shadow-sm active:scale-95 ${
-                  isDark ? 'bg-[#A390E4] hover:bg-[#9887C4]' : 'bg-[#7C65C1] hover:bg-[#6C55B1]'
-                }`}
-              >
-                Publicar com Nota
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 };

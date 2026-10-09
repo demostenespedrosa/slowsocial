@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Momento, User } from '../types';
 import { Plus, X, Clock, Eye } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
@@ -122,8 +123,9 @@ export const MomentosBar: React.FC<MomentosBarProps> = ({
       </div>
 
       {/* Visualizador Vertical de Momentos (Modal 24h Apple Style) */}
-      {activeMomento && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/85 backdrop-blur-xl p-2 sm:p-4 pt-[max(env(safe-area-inset-top),12px)] sm:pt-8 overflow-y-auto animate-in fade-in duration-200">
+      {activeMomento &&
+        createPortal(
+          <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/85 backdrop-blur-xl p-2 sm:p-4 pt-[max(env(safe-area-inset-top),12px)] sm:pt-8 overflow-y-auto animate-in fade-in duration-200">
           <div className="relative w-full max-w-sm h-[88vh] max-h-[740px] bg-[#000000] border border-white/[0.12] rounded-[32px] overflow-hidden flex flex-col justify-between shadow-2xl animate-pop-in">
             {/* Barra de Progresso Efêmero (24h) */}
             <div className="absolute top-3 left-3 right-3 z-20 flex gap-1">
@@ -194,7 +196,8 @@ export const MomentosBar: React.FC<MomentosBarProps> = ({
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
