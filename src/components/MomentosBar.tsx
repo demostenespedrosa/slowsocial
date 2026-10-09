@@ -35,15 +35,15 @@ export const MomentosBar: React.FC<MomentosBarProps> = ({
             : 'bg-white border-black/[0.04] shadow-[0_2px_12px_rgba(0,0,0,0.03)]'
         }`}
       >
-        <div className="flex items-center gap-4 sm:gap-5 overflow-x-auto scrollbar-none py-1 px-0.5">
+        <div className="flex items-center gap-[8px] overflow-x-auto scrollbar-none py-1 px-0.5">
           {/* 1. Adicionar o Seu Próprio Momento */}
           <div
             onClick={onAddMomento}
-            className="flex flex-col items-center gap-2 shrink-0 cursor-pointer group active:scale-95 transition-transform"
+            className="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer group active:scale-95 transition-transform"
           >
             <div className="relative">
               <div
-                className={`w-[74px] h-[74px] sm:w-[80px] sm:h-[80px] rounded-full p-[3px] border-2 border-dashed transition-all ${
+                className={`w-[64px] h-[64px] rounded-full flex items-center justify-center p-[2px] border-2 border-dashed transition-all ${
                   isDark
                     ? 'border-white/20 group-hover:border-[#A390E4]'
                     : 'border-black/15 group-hover:border-[#7C65C1]'
@@ -52,21 +52,21 @@ export const MomentosBar: React.FC<MomentosBarProps> = ({
                 <img
                   src={currentUser.avatar}
                   alt={currentUser.name}
-                  className="w-full h-full rounded-full object-cover"
+                  className="w-[56px] h-[56px] rounded-full object-cover"
                 />
               </div>
               <div
-                className={`absolute -bottom-0.5 -right-0.5 w-7 h-7 rounded-full text-white flex items-center justify-center ring-[3px] shadow-md transition-transform group-hover:scale-110 ${
+                className={`absolute -bottom-0.5 -right-0.5 w-[22px] h-[22px] rounded-full text-white flex items-center justify-center ring-2 shadow-sm transition-transform group-hover:scale-110 ${
                   isDark
                     ? 'bg-gradient-to-tr from-[#7C65C1] to-[#A390E4] ring-[#1C1C1E]'
                     : 'bg-gradient-to-tr from-[#6C55B1] to-[#7C65C1] ring-white'
                 }`}
               >
-                <Plus size={16} strokeWidth={2.8} />
+                <Plus size={13} strokeWidth={2.8} />
               </div>
             </div>
             <span
-              className={`text-[12.5px] sm:text-[13px] font-medium transition-colors ${
+              className={`text-[11.5px] font-medium transition-colors max-w-[64px] truncate text-center ${
                 isDark
                   ? 'text-[#8E8E93] group-hover:text-white'
                   : 'text-[#636366] group-hover:text-black'
@@ -81,30 +81,30 @@ export const MomentosBar: React.FC<MomentosBarProps> = ({
             <div
               key={m.id}
               onClick={() => handleOpenMomento(m)}
-              className="flex flex-col items-center gap-2 shrink-0 cursor-pointer group active:scale-95 transition-transform"
+              className="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer group active:scale-95 transition-transform"
             >
               <div className="relative">
-                {/* Borda de Destaque Grossa Estilo Instagram para Momentos Não Vistos */}
+                {/* Círculo Externo 64x64 dp com Destaque Instagram e Foto Interna 56x56 dp */}
                 <div
-                  className={`w-[74px] h-[74px] sm:w-[80px] sm:h-[80px] rounded-full transition-all duration-300 ${
+                  className={`w-[64px] h-[64px] rounded-full flex items-center justify-center transition-all duration-300 ${
                     !m.hasViewed
-                      ? 'p-[3.5px] bg-gradient-to-tr from-[#6C55B1] via-[#A855F7] to-[#EC4899] shadow-[0_4px_18px_rgba(168,85,247,0.38)] group-hover:shadow-[0_6px_22px_rgba(168,85,247,0.5)] group-hover:scale-105'
+                      ? 'p-[3px] bg-gradient-to-tr from-[#6C55B1] via-[#A855F7] to-[#EC4899] shadow-[0_3px_14px_rgba(168,85,247,0.36)] group-hover:shadow-[0_4px_18px_rgba(168,85,247,0.48)] group-hover:scale-105'
                       : isDark
-                      ? 'p-[2px] bg-white/20'
-                      : 'p-[2px] bg-black/15'
+                      ? 'p-[1.5px] bg-white/20'
+                      : 'p-[1.5px] bg-black/15'
                   }`}
                 >
                   <img
                     src={m.author.avatar}
                     alt={m.author.name}
-                    className={`w-full h-full rounded-full object-cover ring-[3px] transition-all ${
+                    className={`w-[56px] h-[56px] rounded-full object-cover ring-2 transition-all ${
                       isDark ? 'ring-[#1C1C1E]' : 'ring-white'
                     } ${m.hasViewed ? 'opacity-90' : 'opacity-100'}`}
                   />
                 </div>
               </div>
               <span
-                className={`text-[12.5px] sm:text-[13px] font-medium max-w-[76px] sm:max-w-[82px] truncate text-center transition-colors ${
+                className={`text-[11.5px] font-medium max-w-[64px] truncate text-center transition-colors ${
                   !m.hasViewed
                     ? isDark
                       ? 'text-white font-semibold'
