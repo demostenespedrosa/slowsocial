@@ -1,0 +1,259 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    /* TEMA PADRÃO: APPLE IOS LIGHT (System Grouped Background - Ultra Clean, Nítido e Sofisticado) */
+    --bg-base: #F2F2F7;
+    --bg-surface: #FFFFFF;
+    --bg-surface-hover: #F8F8FB;
+    --bg-elevated: #E5E5EA;
+    --border-subtle: rgba(0, 0, 0, 0.06);
+    --border-hover: rgba(0, 0, 0, 0.12);
+
+    /* Cor Pastel Primária: Lilás Apple / Lavanda Nobre */
+    --accent-lilac: #7C65C1;
+    --accent-lilac-hover: #6C55B1;
+    --accent-lilac-soft: rgba(124, 101, 193, 0.12);
+    --accent-lilac-border: rgba(124, 101, 193, 0.28);
+    --accent-lilac-text: #5E47A3;
+
+    /* Acentos Secundários Pastéis Apple */
+    --accent-sage: #34C759;
+    --accent-peach: #FF6961;
+    --accent-honey: #D4A359;
+
+    /* Tipografia Apple Human Interface Guidelines */
+    --text-primary: #000000;
+    --text-secondary: #636366;
+    --text-muted: #8E8E93;
+  }
+
+  .dark {
+    /* TEMA ESCURO: APPLE IOS DARK (True Black OLED & Inset Grouped Charcoal) */
+    --bg-base: #000000;
+    --bg-surface: #1C1C1E;
+    --bg-surface-hover: #2C2C2E;
+    --bg-elevated: #2C2C2E;
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-hover: rgba(255, 255, 255, 0.15);
+
+    /* Cor Pastel Primária no Escuro */
+    --accent-lilac: #A390E4;
+    --accent-lilac-hover: #B5A5EC;
+    --accent-lilac-soft: rgba(163, 144, 228, 0.18);
+    --accent-lilac-border: rgba(163, 144, 228, 0.35);
+    --accent-lilac-text: #D2C7F5;
+
+    /* Acentos Secundários Pastéis */
+    --accent-sage: #30D158;
+    --accent-peach: #FF6961;
+    --accent-honey: #E5B56A;
+
+    --text-primary: #FFFFFF;
+    --text-secondary: #8E8E93;
+    --text-muted: #636366;
+  }
+
+  body {
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
+    letter-spacing: -0.012em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.25s cubic-bezier(0.16, 1, 0.3, 1), color 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
+/* =========================================================================
+   SISTEMA DE ANIMAÇÕES APPLE IOS & LOTTIE MICRO-INTERACTIONS
+   ========================================================================= */
+
+@keyframes viewEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.992);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-view-enter {
+  animation: viewEnter 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes popIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.65) translateY(12px);
+  }
+  70% {
+    transform: scale(1.08) translateY(-2px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-pop-in {
+  animation: popIn 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* Lottie 1: Coração Pulsante */
+@keyframes lottieHeart {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(1.18); }
+  40% { transform: scale(0.96); }
+  60% { transform: scale(1.12); }
+  80% { transform: scale(0.98); }
+}
+.animate-lottie-heart {
+  transform-origin: center;
+  animation: lottieHeart 1.6s infinite ease-in-out;
+}
+
+/* Lottie 2: Palmas Batendo */
+@keyframes clapLeft {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-14deg) translate(-2px, -1px); }
+}
+@keyframes clapRight {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(14deg) translate(2px, -1px); }
+}
+@keyframes clapWave {
+  0%, 100% { opacity: 0; transform: scale(0.7); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+.animate-clap-left {
+  transform-origin: 20px 40px;
+  animation: clapLeft 0.8s infinite ease-in-out;
+}
+.animate-clap-right {
+  transform-origin: 28px 40px;
+  animation: clapRight 0.8s infinite ease-in-out;
+}
+.animate-clap-wave {
+  transform-origin: center;
+  animation: clapWave 0.8s infinite ease-in-out;
+}
+
+/* Lottie 3: Lâmpada Radiante */
+@keyframes lottieBulb {
+  0%, 100% { filter: drop-shadow(0 0 2px rgba(255, 214, 10, 0.4)); transform: scale(1); }
+  50% { filter: drop-shadow(0 0 10px rgba(255, 214, 10, 0.8)); transform: scale(1.05); }
+}
+@keyframes rayPulse {
+  0%, 100% { opacity: 0.4; stroke-width: 2px; }
+  50% { opacity: 1; stroke-width: 3.2px; }
+}
+@keyframes filamentPulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; stroke-width: 2.6px; }
+}
+.animate-lottie-bulb {
+  transform-origin: center;
+  animation: lottieBulb 1.5s infinite ease-in-out;
+}
+.animate-ray-pulse {
+  animation: rayPulse 1.2s infinite ease-in-out;
+}
+.animate-filament-pulse {
+  animation: filamentPulse 1.2s infinite ease-in-out;
+}
+
+/* Lottie 4: Aperto de Mão */
+@keyframes lottieHandshake {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  30% { transform: translateY(-2px) rotate(-3deg); }
+  70% { transform: translateY(1.5px) rotate(2deg); }
+}
+@keyframes handSqueeze {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+.animate-lottie-handshake {
+  transform-origin: center;
+  animation: lottieHandshake 1.4s infinite ease-in-out;
+}
+.animate-hand-squeeze {
+  transform-origin: center;
+  animation: handSqueeze 0.9s infinite ease-in-out;
+}
+
+/* Lottie 5: Fogo Ardente */
+@keyframes flameOuter {
+  0%, 100% { transform: scaleY(1) skewX(0deg); }
+  25% { transform: scaleY(1.08) skewX(2deg); }
+  50% { transform: scaleY(0.95) skewX(-2.5deg); }
+  75% { transform: scaleY(1.05) skewX(1.5deg); }
+}
+@keyframes flameInner {
+  0%, 100% { transform: scaleY(1) translateY(0); }
+  50% { transform: scaleY(1.15) translateY(-1px); }
+}
+@keyframes emberRise {
+  0% { transform: translateY(0) scale(1); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translateY(-16px) scale(0.3); opacity: 0; }
+}
+.animate-lottie-fire {
+  transform-origin: center bottom;
+}
+.animate-flame-outer {
+  transform-origin: center bottom;
+  animation: flameOuter 1.2s infinite ease-in-out;
+}
+.animate-flame-inner {
+  transform-origin: center bottom;
+  animation: flameInner 0.9s infinite ease-in-out;
+}
+.animate-ember-1 { animation: emberRise 1.4s infinite linear; }
+.animate-ember-2 { animation: emberRise 1.6s infinite 0.4s linear; }
+.animate-ember-3 { animation: emberRise 1.2s infinite 0.8s linear; }
+
+/* Lottie 6: Pensativo */
+@keyframes lottieThinking {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-2px) rotate(3deg); }
+}
+@keyframes thinkingEyes {
+  0%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-1.5px) translateX(-0.5px); }
+  70% { transform: translateY(-1px) translateX(1px); }
+}
+@keyframes floatingQuestion {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-4px) scale(1.1); }
+}
+.animate-lottie-thinking {
+  transform-origin: center;
+  animation: lottieThinking 2s infinite ease-in-out;
+}
+.animate-thinking-eyes {
+  animation: thinkingEyes 2s infinite ease-in-out;
+}
+.animate-floating-question {
+  animation: floatingQuestion 1.5s infinite ease-in-out;
+}
+
+/* Partículas de brilho comuns */
+@keyframes sparkle {
+  0%, 100% { transform: scale(0.4); opacity: 0.2; }
+  50% { transform: scale(1.2); opacity: 1; }
+}
+.animate-sparkle-1 { animation: sparkle 1.3s infinite ease-in-out; }
+.animate-sparkle-2 { animation: sparkle 1.5s infinite 0.4s ease-in-out; }
+.animate-sparkle-3 { animation: sparkle 1.2s infinite 0.8s ease-in-out; }
+
+@keyframes pingSlow {
+  0% { transform: scale(0.85); opacity: 0.4; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+.animate-ping-slow {
+  transform-origin: center;
+  animation: pingSlow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
