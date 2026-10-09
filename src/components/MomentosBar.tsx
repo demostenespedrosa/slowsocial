@@ -1,34 +1,71 @@
-import React, { useState } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useState, useMemo } from 'react';
 import { Momento, User } from '../types';
-import { Plus, X, Clock, Eye } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { MomentoStoryViewer } from './MomentoStoryViewer';
 
 interface MomentosBarProps {
   currentUser: User;
   momentos: Momento[];
   onAddMomento: () => void;
+  onSendReply?: (author: User, message: string) => void;
+}
+
+interface AuthorGroupPreview {
+  author: User;
+  stories: Momento[];
+  hasUnviewed: boolean;
 }
 
 export const MomentosBar: React.FC<MomentosBarProps> = ({
   currentUser,
   momentos,
   onAddMomento,
+  onSendReply,
 }) => {
   const { isDark } = useTheme();
-  const [activeMomento, setActiveMomento] = useState<Momento | null>(null);
+  const [activeAuthorId, setActiveAuthorId] = useState<string | null>(null);
   const [localMomentos, setLocalMomentos] = useState<Momento[]>(momentos);
 
-  const handleOpenMomento = (momento: Momento) => {
-    setActiveMomento(momento);
+  // Manter localMomentos sincronizado caso a prop externa mude
+  React.useEffect(() => {
+    setLocalMomentos(momentos);
+  }, [momentos]);
+
+  // Agrupar momentos por autor para a barra horizontal do feed
+  const authorGroups = useMemo<AuthorGroupPreview[]>(() => {
+    const map = new Map<string, AuthorGroupPreview>();
+
+    localMomentos.forEach((m) => {
+      const existing = map.get(m.author.id);
+      if (existing) {
+        existing.stories.push(m);
+        if (!m.hasViewed) existing.hasUnviewed = true;
+      } else {
+        map.set(m.author.id, {
+          author: m.author,
+          stories: [m],
+          hasUnviewed: !m.hasViewed,
+        });
+      }
+    });
+
+    return Array.from(map.values());
+  }, [localMomentos]);
+
+  const handleOpenAuthorStories = (authorId: string) => {
+    setActiveAuthorId(authorId);
+  };
+
+  const handleStoryViewed = (storyId: string) => {
     setLocalMomentos((prev) =>
-      prev.map((m) => (m.id === momento.id ? { ...m, hasViewed: true } : m))
+      prev.map((m) => (m.id === storyId ? { ...m, hasViewed: true } : m))
     );
   };
 
   return (
     <>
-      {/* Trilho Horizontal de Momentos Estilo Apple iOS */}
+      {/* Trilho Horizontal de Momentos Estilo Apple iOS & Instagram */}
       <div
         className={`mb-6 rounded-[22px] p-3.5 sm:p-4 border transition-all ${
           isDark
@@ -77,127 +114,71 @@ export const MomentosBar: React.FC<MomentosBarProps> = ({
             </span>
           </div>
 
-          {/* 2. Lista de Momentos dos Contatos Conectados */}
-          {localMomentos.map((m) => (
-            <div
-              key={m.id}
-              onClick={() => handleOpenMomento(m)}
-              className="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer group active:scale-95 transition-transform"
-            >
-              <div className="relative">
-                {/* Círculo Externo 64x64 dp com Destaque Instagram e Foto Interna 56x56 dp */}
-                <div
-                  className={`w-[64px] h-[64px] rounded-full flex items-center justify-center transition-all duration-300 ${
-                    !m.hasViewed
-                      ? 'p-[3px] bg-gradient-to-tr from-[#6C55B1] via-[#A855F7] to-[#EC4899] shadow-[0_3px_14px_rgba(168,85,247,0.36)] group-hover:shadow-[0_4px_18px_rgba(168,85,247,0.48)] group-hover:scale-105'
+          {/* 2. Lista de Momentos dos Contatos Conectados Agrupados por Pessoa */}
+          {authorGroups.map((group) => {
+            const firstName = group.author.name.split(' ')[0];
+
+            return (
+              <div
+                key={group.author.id}
+                onClick={() => handleOpenAuthorStories(group.author.id)}
+                className="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer group active:scale-95 transition-transform"
+              >
+                <div className="relative">
+                  {/* Círculo Externo 64x64 dp com Destaque Instagram e Foto Interna 56x56 dp */}
+                  <div
+                    className={`w-[64px] h-[64px] rounded-full flex items-center justify-center transition-all duration-300 ${
+                      group.hasUnviewed
+                        ? 'p-[3px] bg-gradient-to-tr from-[#6C55B1] via-[#A855F7] to-[#EC4899] shadow-[0_3px_14px_rgba(168,85,247,0.36)] group-hover:shadow-[0_4px_18px_rgba(168,85,247,0.48)] group-hover:scale-105'
+                        : isDark
+                        ? 'p-[1.5px] bg-white/20'
+                        : 'p-[1.5px] bg-black/15'
+                    }`}
+                  >
+                    <img
+                      src={group.author.avatar}
+                      alt={group.author.name}
+                      className={`w-[56px] h-[56px] rounded-full object-cover ring-2 transition-all ${
+                        isDark ? 'ring-[#1C1C1E]' : 'ring-white'
+                      } ${!group.hasUnviewed ? 'opacity-85' : 'opacity-100'}`}
+                    />
+                  </div>
+
+                  {/* Indicador de múltiplos stories se houver mais de 1 */}
+                  {group.stories.length > 1 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#7C65C1] dark:bg-[#A390E4] text-white text-[9.5px] font-bold flex items-center justify-center ring-2 ring-white dark:ring-[#1C1C1E] shadow-xs">
+                      {group.stories.length}
+                    </span>
+                  )}
+                </div>
+                <span
+                  className={`text-[11.5px] font-medium max-w-[64px] truncate text-center transition-colors ${
+                    group.hasUnviewed
+                      ? isDark
+                        ? 'text-white font-semibold'
+                        : 'text-black font-semibold'
                       : isDark
-                      ? 'p-[1.5px] bg-white/20'
-                      : 'p-[1.5px] bg-black/15'
+                      ? 'text-[#8E8E93] group-hover:text-white'
+                      : 'text-[#636366] group-hover:text-black'
                   }`}
                 >
-                  <img
-                    src={m.author.avatar}
-                    alt={m.author.name}
-                    className={`w-[56px] h-[56px] rounded-full object-cover ring-2 transition-all ${
-                      isDark ? 'ring-[#1C1C1E]' : 'ring-white'
-                    } ${m.hasViewed ? 'opacity-90' : 'opacity-100'}`}
-                  />
-                </div>
+                  {firstName}
+                </span>
               </div>
-              <span
-                className={`text-[11.5px] font-medium max-w-[64px] truncate text-center transition-colors ${
-                  !m.hasViewed
-                    ? isDark
-                      ? 'text-white font-semibold'
-                      : 'text-black font-semibold'
-                    : isDark
-                    ? 'text-[#8E8E93] group-hover:text-white'
-                    : 'text-[#636366] group-hover:text-black'
-                }`}
-              >
-                {m.author.name.split(' ')[0]}
-              </span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
-      {/* Visualizador Vertical de Momentos (Modal 24h Apple Style) */}
-      {activeMomento &&
-        createPortal(
-          <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/85 backdrop-blur-xl p-2 sm:p-4 pt-[max(env(safe-area-inset-top),12px)] sm:pt-8 overflow-y-auto animate-in fade-in duration-200">
-          <div className="relative w-full max-w-sm h-[88vh] max-h-[740px] bg-[#000000] border border-white/[0.12] rounded-[32px] overflow-hidden flex flex-col justify-between shadow-2xl animate-pop-in">
-            {/* Barra de Progresso Efêmero (24h) */}
-            <div className="absolute top-3 left-3 right-3 z-20 flex gap-1">
-              <div className="h-1 flex-1 bg-white/25 rounded-full overflow-hidden">
-                <div className="h-full bg-white rounded-full w-full animate-[progress_5s_linear]" />
-              </div>
-            </div>
-
-            {/* Header do Momento */}
-            <div className="p-4 pt-7 z-20 flex items-center justify-between bg-gradient-to-b from-black/80 via-black/40 to-transparent">
-              <div className="flex items-center gap-2.5">
-                <img
-                  src={activeMomento.author.avatar}
-                  alt={activeMomento.author.name}
-                  className="w-10 h-10 rounded-full object-cover ring-2 ring-white/30"
-                />
-                <div>
-                  <h3 className="text-[14px] font-semibold text-white leading-tight">
-                    {activeMomento.author.name}
-                  </h3>
-                  <div className="flex items-center gap-1.5 text-[11px] text-white/70">
-                    <span>{activeMomento.createdAt}</span>
-                    <span>·</span>
-                    <span className="text-[#D2C7F5] flex items-center gap-1 font-medium">
-                      <Clock size={11} /> Expira em {activeMomento.expiresInHours}h
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setActiveMomento(null)}
-                className="p-2 rounded-full bg-black/40 text-white/80 hover:text-white hover:bg-black/70 transition-colors"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Mídia / Conteúdo Vertical do Momento */}
-            <div className="relative flex-1 flex items-center justify-center overflow-hidden bg-black">
-              {activeMomento.mediaUrl ? (
-                <img
-                  src={activeMomento.mediaUrl}
-                  alt="Momento"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="p-8 text-center">
-                  <p className="text-xl text-white font-medium leading-relaxed">
-                    “{activeMomento.textNote}”
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Legenda / Nota na Base */}
-            <div className="p-5 z-20 bg-gradient-to-t from-black via-black/85 to-transparent space-y-2.5">
-              {activeMomento.textNote && activeMomento.mediaUrl && (
-                <p className="text-[14px] text-white font-medium leading-relaxed drop-shadow-sm">
-                  {activeMomento.textNote}
-                </p>
-              )}
-              <div className="flex items-center justify-between text-[12px] text-white/60 pt-2 border-t border-white/10">
-                <span className="flex items-center gap-1.5">
-                  <Eye size={13} /> Visível apenas para conexões
-                </span>
-                <span className="text-white/80 font-medium">Desaparece em 24h</span>
-              </div>
-            </div>
-          </div>
-        </div>,
-        document.body
+      {/* Visualizador de Stories em Tela Cheia Estilo Instagram */}
+      {activeAuthorId && (
+        <MomentoStoryViewer
+          initialAuthorId={activeAuthorId}
+          momentos={localMomentos}
+          onClose={() => setActiveAuthorId(null)}
+          onStoryViewed={handleStoryViewed}
+          onSendReply={onSendReply}
+        />
       )}
     </>
   );

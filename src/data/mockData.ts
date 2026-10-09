@@ -765,8 +765,9 @@ export const INITIAL_CONVERSATIONS: Conversation[] = [
 ];
 
 export const INITIAL_MOMENTOS: Momento[] = [
+  // Alice Liddell (3 Momentos)
   {
-    id: 'momento-1',
+    id: 'momento-alice-1',
     author: ALICE_USER,
     mediaUrl: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80',
     textNote: 'Café da manhã revisando notas sobre ergonomia cognitiva sem nenhuma notificação aberta. O silêncio cura.',
@@ -775,7 +776,26 @@ export const INITIAL_MOMENTOS: Momento[] = [
     hasViewed: false,
   },
   {
-    id: 'momento-2',
+    id: 'momento-alice-2',
+    author: ALICE_USER,
+    mediaUrl: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=800&q=80',
+    textNote: 'Draft do ensaio sobre sobrecarga assíncrona finalizado. Menos mensagens fragmentadas, mais conversas com substância.',
+    createdAt: 'Há 1h',
+    expiresInHours: 23,
+    hasViewed: false,
+  },
+  {
+    id: 'momento-alice-3',
+    author: ALICE_USER,
+    textNote: '“A atenção é o recurso mais raro e precioso da era moderna. Não a negocie por estímulos descartáveis.”',
+    createdAt: 'Há 45m',
+    expiresInHours: 23,
+    hasViewed: false,
+  },
+
+  // Tomás Ramos (2 Momentos)
+  {
+    id: 'momento-tomas-1',
     author: TOMAS_USER,
     mediaUrl: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80',
     textNote: 'Primeiro sinal limpo no osciloscópio do novo sensor. 18µA de consumo médio.',
@@ -784,7 +804,18 @@ export const INITIAL_MOMENTOS: Momento[] = [
     hasViewed: false,
   },
   {
-    id: 'momento-3',
+    id: 'momento-tomas-2',
+    author: TOMAS_USER,
+    mediaUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
+    textNote: 'Placa de telemetria montada e limpa. Zero ruído na linha analógica nos primeiros testes de bancada.',
+    createdAt: 'Há 2h',
+    expiresInHours: 22,
+    hasViewed: false,
+  },
+
+  // Mariana Costa (2 Momentos)
+  {
+    id: 'momento-mariana-1',
     author: MARIANA_USER,
     mediaUrl: 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=800&q=80',
     textNote: 'Luz matinal entrando no escritório. Um lembrete visual de que o trabalho não precisa ser caótico.',
@@ -793,7 +824,18 @@ export const INITIAL_MOMENTOS: Momento[] = [
     hasViewed: true,
   },
   {
-    id: 'momento-4',
+    id: 'momento-mariana-2',
+    author: MARIANA_USER,
+    mediaUrl: 'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=800&q=80',
+    textNote: 'Revisando diretrizes WCAG para navegação por teclado fluida. O design calmo precisa acolher todo mundo.',
+    createdAt: 'Há 3h',
+    expiresInHours: 21,
+    hasViewed: true,
+  },
+
+  // Lucas Barreto (2 Momentos)
+  {
+    id: 'momento-lucas-1',
     author: LUCAS_USER,
     mediaUrl: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80',
     textNote: 'Compilando os benchmarks em Rust no_std. Zero alocações de heap no caminho crítico.',
@@ -801,4 +843,14 @@ export const INITIAL_MOMENTOS: Momento[] = [
     expiresInHours: 16,
     hasViewed: true,
   },
+  {
+    id: 'momento-lucas-2',
+    author: LUCAS_USER,
+    mediaUrl: 'https://images.unsplash.com/photo-1470246973918-29a93221c455?auto=format&fit=crop&w=800&q=80',
+    textNote: 'Caminhada no fim de tarde. Desconectar um pouco faz as melhores soluções surgirem naturalmente.',
+    createdAt: 'Há 5h',
+    expiresInHours: 19,
+    hasViewed: true,
+  },
 ];
+
