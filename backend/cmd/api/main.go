@@ -19,15 +19,19 @@ import (
 	"github.com/slowsocial/backend/internal/auth"
 	"github.com/slowsocial/backend/internal/cache"
 	"github.com/slowsocial/backend/internal/chat"
+	"github.com/slowsocial/backend/internal/comments"
 	"github.com/slowsocial/backend/internal/config"
+	"github.com/slowsocial/backend/internal/connections"
 	"github.com/slowsocial/backend/internal/database"
 	"github.com/slowsocial/backend/internal/events"
 	"github.com/slowsocial/backend/internal/feed"
 	"github.com/slowsocial/backend/internal/media"
 	"github.com/slowsocial/backend/internal/momentos"
+	"github.com/slowsocial/backend/internal/notifications"
 	"github.com/slowsocial/backend/internal/push"
 	"github.com/slowsocial/backend/internal/realtime"
 	"github.com/slowsocial/backend/internal/telemetry"
+	"github.com/slowsocial/backend/internal/users"
 	"github.com/slowsocial/backend/pkg/response"
 )
 
@@ -74,14 +78,18 @@ func main() {
 	// 6. Observabilidade OpenTelemetry
 	_, _ = telemetry.InitTracer(context.Background(), "slowsocial-api", cfg.Environment)
 
-	// 7. Serviços e Middlewares
+	// 7. Inicialização de Serviços da Camada de Domínio
 	feedService := feed.NewFeedService(db.Pool, redisClient)
 	authMiddleware := auth.NewAuthMiddleware(cfg)
 	pushService := push.NewFCMService(cfg)
 	momentoService := momentos.NewMomentoService(db.Pool)
 	chatService := chat.NewChatService(db.Pool, wsHub, pushService)
+	commentService := comments.NewCommentService(db.Pool)
+	connService := connections.NewConnectionService(db.Pool)
+	notifService := notifications.NewNotificationService(db.Pool)
+	userService := users.NewUserService(db.Pool)
 
-	// 7. Roteador HTTP Chi
+	// 8. Roteador HTTP Chi
 	r := chi.NewRouter()
 
 	// Middlewares Essenciais
@@ -115,23 +123,27 @@ func main() {
 	r.Get("/ws", func(w http.ResponseWriter, r *http.Request) {
 		userID := r.URL.Query().Get("user_id")
 		if userID == "" {
-			userID = uuid.New().String() // Temporário para teste anônimo se não autenticado
+			userID = uuid.New().String()
 		}
 		realtime.ServeWS(wsHub, w, r, userID)
 	})
 
+	// -------------------------------------------------------------
 	// Rotas da API v1
+	// -------------------------------------------------------------
 	r.Route("/api/v1", func(api chi.Router) {
-		// Rotas Públicas
+		// Rota Pública de Teste
 		api.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 			response.Success(w, http.StatusOK, "pong", nil)
 		})
 
-		// Rotas Autenticadas com Supabase JWT
+		// Rotas Protegidas por Supabase JWT
 		api.Group(func(protected chi.Router) {
 			protected.Use(authMiddleware.RequireAuth)
 
-			// 1. Feed de Conexões e Radar
+			// =========================================================
+			// 1. Feed & Posts
+			// =========================================================
 			protected.Get("/feed", func(w http.ResponseWriter, r *http.Request) {
 				userID, _ := auth.GetUserID(r.Context())
 				limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
@@ -148,7 +160,6 @@ func main() {
 				response.Success(w, http.StatusOK, "feed carregado com sucesso", posts)
 			})
 
-			// 2. Criar Nova Publicação
 			protected.Post("/posts", func(w http.ResponseWriter, r *http.Request) {
 				userID, _ := auth.GetUserID(r.Context())
 
@@ -189,7 +200,6 @@ func main() {
 					return
 				}
 
-				// Publicar evento assíncrono no Apache Kafka
 				_ = kafkaProducer.Publish(r.Context(), events.TopicPostCreated, postID, events.PostCreatedEvent{
 					PostID:    postID,
 					AuthorID:  userID,
@@ -202,7 +212,6 @@ func main() {
 				})
 			})
 
-			// 3. Reações com Lottie / Emojis Oficiais (❤️, 👏, 💡, 🤝, 🔥, 🤔)
 			protected.Post("/posts/{id}/react", func(w http.ResponseWriter, r *http.Request) {
 				userID, _ := auth.GetUserID(r.Context())
 				postID := chi.URLParam(r, "id")
@@ -215,7 +224,6 @@ func main() {
 					return
 				}
 
-				// Upsert de Reação
 				query := `
 					INSERT INTO reactions (user_id, target_type, target_id, reaction_type)
 					VALUES ($1, 'post', $2, $3)
@@ -228,7 +236,6 @@ func main() {
 					return
 				}
 
-				// Publicar no Kafka para contagem assíncrona
 				_ = kafkaProducer.Publish(r.Context(), events.TopicPostReacted, postID, events.PostReactedEvent{
 					UserID:       userID,
 					TargetType:   "post",
@@ -242,12 +249,207 @@ func main() {
 				})
 			})
 
-			// 4. Presigned Upload URL para S3 / Cloudflare CDN
+			// =========================================================
+			// 2. Comentários e Respostas Aprofundadas
+			// =========================================================
+			protected.Get("/posts/{id}/comments", func(w http.ResponseWriter, r *http.Request) {
+				postID := chi.URLParam(r, "id")
+				commentsList, err := commentService.GetCommentsByPostID(r.Context(), postID)
+				if err != nil {
+					response.InternalServerError(w, "erro ao carregar comentários")
+					return
+				}
+				response.Success(w, http.StatusOK, "comentários carregados", commentsList)
+			})
+
+			protected.Post("/posts/{id}/comments", func(w http.ResponseWriter, r *http.Request) {
+				userID, _ := auth.GetUserID(r.Context())
+				postID := chi.URLParam(r, "id")
+
+				var body struct {
+					Content  string  `json:"content"`
+					ParentID *string `json:"parent_id"`
+				}
+				if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+					response.BadRequest(w, "payload json inválido")
+					return
+				}
+
+				if body.Content == "" {
+					response.BadRequest(w, "o comentário não pode ser vazio")
+					return
+				}
+
+				c, err := commentService.CreateComment(r.Context(), postID, userID, body.Content, body.ParentID)
+				if err != nil {
+					response.InternalServerError(w, fmt.Sprintf("erro ao salvar comentário: %v", err))
+					return
+				}
+
+				response.Success(w, http.StatusCreated, "comentário publicado", c)
+			})
+
+			// =========================================================
+			// 3. Conexões & Networking Consciente
+			// =========================================================
+			protected.Get("/connections", func(w http.ResponseWriter, r *http.Request) {
+				userID, _ := auth.GetUserID(r.Context())
+				status := r.URL.Query().Get("status") // 'active' ou 'pending'
+				list, err := connService.ListConnections(r.Context(), userID, status)
+				if err != nil {
+					response.InternalServerError(w, "erro ao listar conexões")
+					return
+				}
+				response.Success(w, http.StatusOK, "conexões obtidas com sucesso", list)
+			})
+
+			protected.Post("/connections/request", func(w http.ResponseWriter, r *http.Request) {
+				userID, _ := auth.GetUserID(r.Context())
+				var body struct {
+					TargetUserID string `json:"target_user_id"`
+					Note         string `json:"note"`
+				}
+				if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+					response.BadRequest(w, "payload json inválido")
+					return
+				}
+
+				item, err := connService.RequestConnection(r.Context(), userID, body.TargetUserID, body.Note)
+				if err != nil {
+					response.BadRequest(w, err.Error())
+					return
+				}
+				response.Success(w, http.StatusCreated, "solicitação de conexão enviada", item)
+			})
+
+			protected.Post("/connections/{id}/accept", func(w http.ResponseWriter, r *http.Request) {
+				userID, _ := auth.GetUserID(r.Context())
+				connID := chi.URLParam(r, "id")
+
+				if err := connService.AcceptConnection(r.Context(), connID, userID); err != nil {
+					response.BadRequest(w, err.Error())
+					return
+				}
+				response.Success(w, http.StatusOK, "conexão aceita com sucesso", nil)
+			})
+
+			protected.Post("/connections/{id}/reject", func(w http.ResponseWriter, r *http.Request) {
+				userID, _ := auth.GetUserID(r.Context())
+				connID := chi.URLParam(r, "id")
+
+				if err := connService.RejectConnection(r.Context(), connID, userID); err != nil {
+					response.BadRequest(w, err.Error())
+					return
+				}
+				response.Success(w, http.StatusOK, "solicitação recusada", nil)
+			})
+
+			protected.Delete("/connections/{id}", func(w http.ResponseWriter, r *http.Request) {
+				userID, _ := auth.GetUserID(r.Context())
+				connID := chi.URLParam(r, "id")
+
+				if err := connService.RemoveConnection(r.Context(), connID, userID); err != nil {
+					response.BadRequest(w, err.Error())
+					return
+				}
+				response.Success(w, http.StatusOK, "conexão desfeita com sucesso", nil)
+			})
+
+			// =========================================================
+			// 4. Notificações
+			// =========================================================
+			protected.Get("/notifications", func(w http.ResponseWriter, r *http.Request) {
+				userID, _ := auth.GetUserID(r.Context())
+				limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+				offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+
+				list, err := notifService.GetUserNotifications(r.Context(), userID, limit, offset)
+				if err != nil {
+					response.InternalServerError(w, "erro ao buscar notificações")
+					return
+				}
+				response.Success(w, http.StatusOK, "notificações carregadas", list)
+			})
+
+			protected.Get("/notifications/unread-count", func(w http.ResponseWriter, r *http.Request) {
+				userID, _ := auth.GetUserID(r.Context())
+				count, err := notifService.GetUnreadCount(r.Context(), userID)
+				if err != nil {
+					response.InternalServerError(w, "erro ao contar notificações não lidas")
+					return
+				}
+				response.Success(w, http.StatusOK, "contagem obtida", map[string]int{"unread_count": count})
+			})
+
+			protected.Patch("/notifications/{id}/read", func(w http.ResponseWriter, r *http.Request) {
+				userID, _ := auth.GetUserID(r.Context())
+				notifID := chi.URLParam(r, "id")
+
+				if err := notifService.MarkAsRead(r.Context(), notifID, userID); err != nil {
+					response.InternalServerError(w, "erro ao atualizar notificação")
+					return
+				}
+				response.Success(w, http.StatusOK, "notificação marcada como lida", nil)
+			})
+
+			protected.Post("/notifications/read-all", func(w http.ResponseWriter, r *http.Request) {
+				userID, _ := auth.GetUserID(r.Context())
+				if err := notifService.MarkAllAsRead(r.Context(), userID); err != nil {
+					response.InternalServerError(w, "erro ao marcar notificações como lidas")
+					return
+				}
+				response.Success(w, http.StatusOK, "todas as notificações marcadas como lidas", nil)
+			})
+
+			// =========================================================
+			// 5. Perfil de Usuário
+			// =========================================================
+			protected.Get("/users/me", func(w http.ResponseWriter, r *http.Request) {
+				userID, _ := auth.GetUserID(r.Context())
+				profile, err := userService.GetProfile(r.Context(), userID, userID)
+				if err != nil {
+					response.NotFound(w, "usuário não encontrado")
+					return
+				}
+				response.Success(w, http.StatusOK, "perfil carregado", profile)
+			})
+
+			protected.Put("/users/me", func(w http.ResponseWriter, r *http.Request) {
+				userID, _ := auth.GetUserID(r.Context())
+				var body users.ProfileUpdate
+				if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+					response.BadRequest(w, "payload json inválido")
+					return
+				}
+
+				profile, err := userService.UpdateProfile(r.Context(), userID, body)
+				if err != nil {
+					response.InternalServerError(w, "erro ao atualizar perfil")
+					return
+				}
+				response.Success(w, http.StatusOK, "perfil atualizado com sucesso", profile)
+			})
+
+			protected.Get("/users/{id}/profile", func(w http.ResponseWriter, r *http.Request) {
+				currentUserID, _ := auth.GetUserID(r.Context())
+				targetID := chi.URLParam(r, "id")
+
+				profile, err := userService.GetProfile(r.Context(), targetID, currentUserID)
+				if err != nil {
+					response.NotFound(w, "perfil não encontrado")
+					return
+				}
+				response.Success(w, http.StatusOK, "perfil carregado", profile)
+			})
+
+			// =========================================================
+			// 6. Upload Presign S3 & Cloudflare CDN
+			// =========================================================
 			protected.Post("/media/presign-upload", func(w http.ResponseWriter, r *http.Request) {
 				var body struct {
 					FileName    string `json:"file_name"`
 					ContentType string `json:"content_type"`
-					Folder      string `json:"folder"` // "posts", "stories", "avatars"
+					Folder      string `json:"folder"`
 				}
 				if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 					response.BadRequest(w, "payload json inválido")
@@ -267,7 +469,9 @@ func main() {
 				response.Success(w, http.StatusOK, "url de upload gerada com sucesso", presigned)
 			})
 
-			// 5. Momentos (Stories 24h Instagram Style)
+			// =========================================================
+			// 7. Momentos (Stories 24h Instagram Style)
+			// =========================================================
 			protected.Get("/momentos", func(w http.ResponseWriter, r *http.Request) {
 				userID, _ := auth.GetUserID(r.Context())
 				groups, err := momentoService.GetActiveMomentosGrouped(r.Context(), userID)
@@ -308,10 +512,12 @@ func main() {
 				response.Success(w, http.StatusOK, "momento visualizado", nil)
 			})
 
-			// 6. Conversas & Mensagens em Tempo Real
+			// =========================================================
+			// 8. Conversas & Mensagens em Tempo Real
+			// =========================================================
 			protected.Get("/conversations", func(w http.ResponseWriter, r *http.Request) {
 				userID, _ := auth.GetUserID(r.Context())
-				tab := r.URL.Query().Get("tab") // "direct" ou "request"
+				tab := r.URL.Query().Get("tab")
 				convs, err := chatService.GetUserConversations(r.Context(), userID, tab)
 				if err != nil {
 					response.InternalServerError(w, "erro ao buscar conversas")
@@ -342,7 +548,6 @@ func main() {
 			})
 		})
 	})
-
 
 	// Inicialização Graciosa do Servidor HTTP
 	srv := &http.Server{
