@@ -1,13 +1,3 @@
-buildscript {
-    ext.flutter = [
-        compileSdkVersion: 34,
-        minSdkVersion: 24,
-        targetSdkVersion: 34,
-        ndkVersion: "27.0.12077973",
-        source: '../..'
-    ]
-}
-
 allprojects {
     repositories {
         google()
@@ -20,19 +10,19 @@ subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
 }
 
-subprojects {
-    if (project.name != "app") {
-        project.ext.flutter = [
+subprojects { subproject ->
+    if (subproject.name != "app") {
+        subproject.ext.flutter = [
             compileSdkVersion: 34,
             minSdkVersion: 24,
             targetSdkVersion: 34,
             ndkVersion: "27.0.12077973",
             source: '../..'
         ]
-        plugins.withId("com.android.library") {
+        subproject.plugins.withId("com.android.library") {
             try {
-                if (!project.android.extensions.findByName("flutter")) {
-                    project.android.extensions.add("flutter", [
+                if (!subproject.android.extensions.findByName("flutter")) {
+                    subproject.android.extensions.add("flutter", [
                         compileSdkVersion: 34,
                         minSdkVersion: 24,
                         targetSdkVersion: 34,
@@ -41,29 +31,21 @@ subprojects {
                     ])
                 }
             } catch (ignored) {}
+            try {
+                subproject.android {
+                    compileSdkVersion 34
+                    if (namespace == null) {
+                        namespace subproject.group
+                    }
+                }
+            } catch (ignored) {}
         }
     }
 }
 
-subprojects {
-    if (project.name != "app") {
-        project.evaluationDependsOn(":app")
-    }
-}
-
-subprojects {
-    afterEvaluate { project ->
-        if (project.name != "app" && project.hasProperty("android")) {
-            project.android {
-                if (namespace == null) {
-                    namespace project.group
-                }
-                compileSdkVersion 34
-                defaultConfig {
-                    targetSdkVersion 34
-                }
-            }
-        }
+subprojects { subproject ->
+    if (subproject.name != "app") {
+        subproject.evaluationDependsOn(":app")
     }
 }
 
