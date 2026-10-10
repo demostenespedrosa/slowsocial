@@ -3,7 +3,8 @@ buildscript {
         compileSdkVersion: 34,
         minSdkVersion: 24,
         targetSdkVersion: 34,
-        ndkVersion: "27.0.12077973"
+        ndkVersion: "27.0.12077973",
+        source: '../..'
     ]
 }
 
@@ -12,12 +13,6 @@ allprojects {
         google()
         mavenCentral()
     }
-    ext.flutter = [
-        compileSdkVersion: 34,
-        minSdkVersion: 24,
-        targetSdkVersion: 34,
-        ndkVersion: "27.0.12077973"
-    ]
 }
 
 rootProject.buildDir = "../build"
@@ -26,38 +21,39 @@ subprojects {
 }
 
 subprojects {
-    project.ext {
-        set("flutter.compileSdkVersion", 34)
-        set("flutter.minSdkVersion", 24)
-        set("flutter.targetSdkVersion", 34)
-    }
-    project.ext.flutter = [
-        compileSdkVersion: 34,
-        minSdkVersion: 24,
-        targetSdkVersion: 34,
-        ndkVersion: "27.0.12077973"
-    ]
-    plugins.withId("com.android.library") {
-        try {
-            if (!project.android.extensions.findByName("flutter")) {
-                project.android.extensions.add("flutter", [
-                    compileSdkVersion: 34,
-                    minSdkVersion: 24,
-                    targetSdkVersion: 34,
-                    ndkVersion: "27.0.12077973"
-                ])
-            }
-        } catch (ignored) {}
+    if (project.name != "app") {
+        project.ext.flutter = [
+            compileSdkVersion: 34,
+            minSdkVersion: 24,
+            targetSdkVersion: 34,
+            ndkVersion: "27.0.12077973",
+            source: '../..'
+        ]
+        plugins.withId("com.android.library") {
+            try {
+                if (!project.android.extensions.findByName("flutter")) {
+                    project.android.extensions.add("flutter", [
+                        compileSdkVersion: 34,
+                        minSdkVersion: 24,
+                        targetSdkVersion: 34,
+                        ndkVersion: "27.0.12077973",
+                        source: '../..'
+                    ])
+                }
+            } catch (ignored) {}
+        }
     }
 }
 
 subprojects {
-    project.evaluationDependsOn(":app")
+    if (project.name != "app") {
+        project.evaluationDependsOn(":app")
+    }
 }
 
 subprojects {
     afterEvaluate { project ->
-        if (project.hasProperty("android")) {
+        if (project.name != "app" && project.hasProperty("android")) {
             project.android {
                 if (namespace == null) {
                     namespace project.group
