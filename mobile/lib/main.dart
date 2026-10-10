@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
-import 'features/feed/feed_screen.dart';
+import 'features/navigation/main_navigation_shell.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,10 +28,11 @@ class SlowSocialApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system, // Acompanha o sistema (iOS/Android)
-      home: const FeedScreen(),
+      home: const MainNavigationShell(),
     );
   }
 }
+
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
