@@ -1,16 +1,74 @@
+buildscript {
+    ext.flutter = [
+        compileSdkVersion: 34,
+        minSdkVersion: 24,
+        targetSdkVersion: 34,
+        ndkVersion: "27.0.12077973"
+    ]
+}
+
 allprojects {
     repositories {
         google()
         mavenCentral()
     }
+    ext.flutter = [
+        compileSdkVersion: 34,
+        minSdkVersion: 24,
+        targetSdkVersion: 34,
+        ndkVersion: "27.0.12077973"
+    ]
 }
 
 rootProject.buildDir = "../build"
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
 }
+
+subprojects {
+    project.ext {
+        set("flutter.compileSdkVersion", 34)
+        set("flutter.minSdkVersion", 24)
+        set("flutter.targetSdkVersion", 34)
+    }
+    project.ext.flutter = [
+        compileSdkVersion: 34,
+        minSdkVersion: 24,
+        targetSdkVersion: 34,
+        ndkVersion: "27.0.12077973"
+    ]
+    plugins.withId("com.android.library") {
+        try {
+            if (!project.android.extensions.findByName("flutter")) {
+                project.android.extensions.add("flutter", [
+                    compileSdkVersion: 34,
+                    minSdkVersion: 24,
+                    targetSdkVersion: 34,
+                    ndkVersion: "27.0.12077973"
+                ])
+            }
+        } catch (ignored) {}
+    }
+}
+
 subprojects {
     project.evaluationDependsOn(":app")
+}
+
+subprojects {
+    afterEvaluate { project ->
+        if (project.hasProperty("android")) {
+            project.android {
+                if (namespace == null) {
+                    namespace project.group
+                }
+                compileSdkVersion 34
+                defaultConfig {
+                    targetSdkVersion 34
+                }
+            }
+        }
+    }
 }
 
 tasks.register("clean", Delete) {
