@@ -209,7 +209,8 @@ Antes de subir a API, obtenha as chaves gratuitas dos 3 serviços parceiros:
    * Repositório: `demostenespedrosa/slowsocial`
    * Branch: `main`
    * **Build Type:** `Dockerfile`
-   * **Dockerfile Path:** `deploy/docker/Dockerfile.api`
+   * **Root Directory:** `backend` *(ou deixe em branco se o Dockerfile Path for `Dockerfile`)*
+   * **Dockerfile Path:** `Dockerfile` *(localizado em `backend/Dockerfile`)*
 4. **Domains (Domínio):**
    * Adicione: `api.slowsocial.app`
    * Port: `8080`
@@ -259,7 +260,8 @@ O worker consome mensagens do Kafka para fan-out de timeline, transcodificação
    * Selecione **GitHub**: `demostenespedrosa/slowsocial`
    * Branch: `main`
    * **Build Type:** `Dockerfile`
-   * **Dockerfile Path:** `deploy/docker/Dockerfile.worker`
+   * **Root Directory:** `backend`
+   * **Dockerfile Path:** `Dockerfile.worker`
 4. **Domains:**
    * *Nenhum domínio é necessário* (o worker é um serviço em segundo plano).
 5. **Environment:**

@@ -1,0 +1,36 @@
+# =========================================================================
+# DOCKERFILE: SLOWSOCIAL ASYNC WORKER (Context: backend/)
+# Multi-stage build com FFmpeg para transcodificação e FCM
+# =========================================================================
+
+# Estágio 1: Compilação
+FROM golang:1.23-alpine AS builder
+
+WORKDIR /app
+
+RUN apk add --no-cache ca-certificates git
+
+# Cache de dependências Go
+COPY go.mod go.sum* ./
+RUN go mod download || true
+
+# Copiar código fonte
+COPY . ./
+
+# Compilação estática com CGO desabilitado
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o /app/bin/worker ./cmd/worker
+
+# Estágio 2: Imagem Final com FFmpeg
+FROM alpine:3.20
+
+WORKDIR /app
+
+# Instalar FFmpeg e certificados SSL
+RUN apk add --no-cache ca-certificates tzdata ffmpeg
+
+# Copiar binário compilado
+COPY --from=builder /app/bin/worker /app/worker
+
+USER nobody:nobody
+
+ENTRYPOINT ["/app/worker"]
