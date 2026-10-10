@@ -1,6 +1,5 @@
 # =========================================================================
-# DOCKERFILE: SLOWSOCIAL WORKER (Kafka + FFmpeg)
-# Multi-stage build com FFmpeg nativo
+# DOCKERFILE: SLOWSOCIAL ASYNC WORKER (Kafka + FFmpeg + FCM)
 # =========================================================================
 
 # Estágio 1: Compilação
@@ -10,21 +9,30 @@ WORKDIR /app
 
 RUN apk add --no-cache ca-certificates git
 
+# Cache de dependências Go
 COPY backend/go.mod backend/go.sum* ./
 RUN go mod download || true
 
+# Copiar código fonte
 COPY backend/ ./
 
+# Garantir dependências e gerar go.sum automaticamente
+RUN go mod tidy
+
+# Compilação estática com CGO desabilitado
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o /app/bin/worker ./cmd/worker
 
-# Estágio 2: Imagem com FFmpeg
+# Estágio 2: Imagem Final com FFmpeg
 FROM alpine:3.20
 
 WORKDIR /app
 
-# Instalar FFmpeg e dependências de áudio/vídeo
+# Instalar FFmpeg e certificados SSL
 RUN apk add --no-cache ca-certificates tzdata ffmpeg
 
+# Copiar binário compilado
 COPY --from=builder /app/bin/worker /app/worker
+
+USER nobody:nobody
 
 ENTRYPOINT ["/app/worker"]

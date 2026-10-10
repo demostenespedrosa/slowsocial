@@ -17,6 +17,9 @@ RUN go mod download || true
 # Copiar código fonte
 COPY . ./
 
+# Garantir dependências e gerar go.sum automaticamente
+RUN go mod tidy
+
 # Compilação estática com CGO desabilitado
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o /app/bin/worker ./cmd/worker
 
