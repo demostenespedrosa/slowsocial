@@ -18,12 +18,16 @@ import (
 	"github.com/google/uuid"
 	"github.com/slowsocial/backend/internal/auth"
 	"github.com/slowsocial/backend/internal/cache"
+	"github.com/slowsocial/backend/internal/chat"
 	"github.com/slowsocial/backend/internal/config"
 	"github.com/slowsocial/backend/internal/database"
 	"github.com/slowsocial/backend/internal/events"
 	"github.com/slowsocial/backend/internal/feed"
 	"github.com/slowsocial/backend/internal/media"
+	"github.com/slowsocial/backend/internal/momentos"
+	"github.com/slowsocial/backend/internal/push"
 	"github.com/slowsocial/backend/internal/realtime"
+	"github.com/slowsocial/backend/internal/telemetry"
 	"github.com/slowsocial/backend/pkg/response"
 )
 
@@ -67,9 +71,15 @@ func main() {
 	go wsHub.Run()
 	log.Printf("✅ WebSocket Hub em tempo real iniciado")
 
-	// 6. Serviços e Middlewares
+	// 6. Observabilidade OpenTelemetry
+	_, _ = telemetry.InitTracer(context.Background(), "slowsocial-api", cfg.Environment)
+
+	// 7. Serviços e Middlewares
 	feedService := feed.NewFeedService(db.Pool, redisClient)
 	authMiddleware := auth.NewAuthMiddleware(cfg)
+	pushService := push.NewFCMService(cfg)
+	momentoService := momentos.NewMomentoService(db.Pool)
+	chatService := chat.NewChatService(db.Pool, wsHub, pushService)
 
 	// 7. Roteador HTTP Chi
 	r := chi.NewRouter()
@@ -256,8 +266,83 @@ func main() {
 
 				response.Success(w, http.StatusOK, "url de upload gerada com sucesso", presigned)
 			})
+
+			// 5. Momentos (Stories 24h Instagram Style)
+			protected.Get("/momentos", func(w http.ResponseWriter, r *http.Request) {
+				userID, _ := auth.GetUserID(r.Context())
+				groups, err := momentoService.GetActiveMomentosGrouped(r.Context(), userID)
+				if err != nil {
+					response.InternalServerError(w, "erro ao buscar momentos")
+					return
+				}
+				response.Success(w, http.StatusOK, "momentos carregados", groups)
+			})
+
+			protected.Post("/momentos", func(w http.ResponseWriter, r *http.Request) {
+				userID, _ := auth.GetUserID(r.Context())
+				var body struct {
+					MediaURL       string `json:"media_url"`
+					TextNote       string `json:"text_note"`
+					ExpiresInHours int    `json:"expires_in_hours"`
+				}
+				if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+					response.BadRequest(w, "payload json inválido")
+					return
+				}
+
+				momentoID, err := momentoService.CreateMomento(r.Context(), userID, body.MediaURL, body.TextNote, body.ExpiresInHours)
+				if err != nil {
+					response.InternalServerError(w, "erro ao criar momento")
+					return
+				}
+
+				response.Success(w, http.StatusCreated, "momento criado", map[string]string{
+					"id": momentoID,
+				})
+			})
+
+			protected.Post("/momentos/{id}/view", func(w http.ResponseWriter, r *http.Request) {
+				userID, _ := auth.GetUserID(r.Context())
+				momentoID := chi.URLParam(r, "id")
+				_ = momentoService.MarkMomentoViewed(r.Context(), momentoID, userID)
+				response.Success(w, http.StatusOK, "momento visualizado", nil)
+			})
+
+			// 6. Conversas & Mensagens em Tempo Real
+			protected.Get("/conversations", func(w http.ResponseWriter, r *http.Request) {
+				userID, _ := auth.GetUserID(r.Context())
+				tab := r.URL.Query().Get("tab") // "direct" ou "request"
+				convs, err := chatService.GetUserConversations(r.Context(), userID, tab)
+				if err != nil {
+					response.InternalServerError(w, "erro ao buscar conversas")
+					return
+				}
+				response.Success(w, http.StatusOK, "conversas carregadas", convs)
+			})
+
+			protected.Post("/conversations/{id}/messages", func(w http.ResponseWriter, r *http.Request) {
+				userID, _ := auth.GetUserID(r.Context())
+				convID := chi.URLParam(r, "id")
+
+				var body struct {
+					Content string `json:"content"`
+				}
+				if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+					response.BadRequest(w, "payload json inválido")
+					return
+				}
+
+				msg, err := chatService.SendMessage(r.Context(), convID, userID, body.Content)
+				if err != nil {
+					response.InternalServerError(w, "erro ao enviar mensagem")
+					return
+				}
+
+				response.Success(w, http.StatusCreated, "mensagem enviada", msg)
+			})
 		})
 	})
+
 
 	// Inicialização Graciosa do Servidor HTTP
 	srv := &http.Server{
