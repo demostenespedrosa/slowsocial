@@ -1,0 +1,50 @@
+name: SlowSocial Mobile Flutter CI
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/flutter-ci.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'mobile/**'
+
+jobs:
+  analyze-and-test:
+    name: Flutter Lint & Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Código
+        uses: actions/checkout@v4
+
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.x'
+          channel: 'stable'
+          cache: true
+
+      - name: Instalar Dependências Flutter
+        working-directory: mobile
+        run: flutter pub get
+
+      - name: Executar Análise Estática (flutter analyze)
+        working-directory: mobile
+        run: flutter analyze
+
+      - name: Executar Testes Unitários
+        working-directory: mobile
+        run: flutter test --coverage
+
+      - name: Verificar Build Debug Android APK
+        working-directory: mobile
+        run: flutter build apk --debug

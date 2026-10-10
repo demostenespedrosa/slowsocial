@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: slowsocial-config
+  labels:
+    app.kubernetes.io/name: slowsocial
+    app.kubernetes.io/part-of: slowsocial-platform
+data:
+  SERVER_PORT: "8080"
+  ENVIRONMENT: "production"
+  LOG_LEVEL: "info"
+  KAFKA_BROKERS: "slowsocial-kafka:9092"
+  KAFKA_GROUP_ID: "slowsocial-worker-group"
+  KAFKA_TOPIC_POST_CREATED: "slowsocial.post.created"
+  KAFKA_TOPIC_POST_REACTED: "slowsocial.post.reacted"
+  KAFKA_TOPIC_MEDIA_TRANSCODE: "slowsocial.media.transcode"
+  KAFKA_TOPIC_NOTIF_PUSH: "slowsocial.notification.push"
+  S3_ENDPOINT: "https://s3.amazonaws.com"
+  S3_REGION: "us-east-1"
+  S3_BUCKET: "slowsocial-media-production"
+  CDN_BASE_URL: "https://media.slowsocial.app"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://slowsocial-otel-collector:4317"
