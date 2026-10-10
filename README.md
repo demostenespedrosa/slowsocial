@@ -1,6 +1,14 @@
 # SlowSocial 🌿✨
 
-> Plataforma de rede social calma, consciente e de alto desempenho projetada para o mundo real. Base de código mobile unificada em **Flutter**, backend distribuído e de baixa latência em **Go (Golang)**, mensageria orientada a eventos com **Apache Kafka**, persistência relacional **PostgreSQL**, cache **Redis**, e infraestrutura escalável com **Docker** e **Kubernetes**.
+> Plataforma de rede social calma, consciente e de alto desempenho projetada para o mundo real. Base de código mobile unificada em **Flutter**, backend distribuído e de baixa latência em **Go (Golang)**, mensageria orientada a eventos com **Apache Kafka**, persistência relacional **PostgreSQL**, cache **Redis**, e infraestrutura escalável com **Docker**, **Kubernetes** e **Easypanel**.
+
+---
+
+## 🌐 Deploy em Produção Real com Easypanel
+
+Para colocar o SlowSocial no ar de verdade em uma VPS (Hetzner, Contabo, DigitalOcean, etc.) com domínio próprio, SSL gratuito e painel visual:
+
+👉 **[Consulte o Guia Passo a Passo: DEPLOY_EASYPANEL.md](./DEPLOY_EASYPANEL.md)**
 
 ---
 
@@ -15,12 +23,12 @@
 | **Cache & Presença** | **Redis 7** | Armazenamento de feeds pré-computados (`ZSET`), controle de presença e rate limiting. |
 | **Mensageria & Streaming** | **Apache Kafka (KRaft)** | Barramento assíncrono para fan-out de posts, transcodificação e notificações. |
 | **Comunicação Tempo Real** | **WebSockets (Gorilla)** | Mensagens diretas instantâneas, status de digitação e eventos de presença. |
-| **Storage de Mídia** | **AWS S3 / MinIO** | Upload direto via URLs pré-assinadas (*Presigned URLs*), sem gargalos no gateway. |
+| **Storage de Mídia** | **Cloudflare R2 / AWS S3** | Upload direto via URLs pré-assinadas (*Presigned URLs*), sem gargalos no gateway. |
 | **CDN Global** | **Cloudflare CDN** | Cache distribuído na borda, terminação TLS e otimização de entrega de imagens. |
 | **Transcodificação de Mídia**| **FFmpeg (Worker Service)**| Geração automática de miniaturas e conversão de vídeo para streaming HLS adaptativo. |
 | **Notificações Push** | **Firebase Cloud Messaging** | Entrega confiável de notificações push para smartphones Android e iPhones. |
 | **Observabilidade** | **OpenTelemetry + Grafana** | Coleta padronizada de métricas, traces distribuídos e dashboards de desempenho. |
-| **Orquestração** | **Docker & Kubernetes (HPA)**| Containers imutáveis, autoescalonamento horizontal (HPA) e alta disponibilidade. |
+| **Orquestração & Painel** | **Easypanel / Kubernetes** | Deploy simples em VPS via Easypanel ou cluster elástico com K8s (HPA). |
 | **Automação CI/CD** | **GitHub Actions** | Pipelines automatizados de testes unitários, análise estática e builds de containers/APK. |
 
 ---
@@ -32,40 +40,38 @@ SlowSocial/
 ├── backend/                  # Backend Go (Golang 1.23)
 │   ├── cmd/
 │   │   ├── api/              # Ponto de entrada do API Gateway HTTP e WebSockets
-│   │   └── worker/           # Worker assíncrono de eventos Kafka e transcodificação
+│   │   └── worker/           # Worker assíncrono de eventos Kafka, FFmpeg e Push FCM
 │   ├── internal/
 │   │   ├── auth/             # Middleware de validação Supabase JWT
 │   │   ├── chat/             # Serviço de conversas e mensagens diretas
+│   │   ├── comments/         # Comentários em árvore e respostas aprofundadas
 │   │   ├── config/           # Carregador tipado de variáveis de ambiente
+│   │   ├── connections/      # Grafo social e networking consciente (nota até 140 chars)
 │   │   ├── database/         # Pool de conexões pgxpool para PostgreSQL
-│   │   ├── events/           # Produtor e consumidor Apache Kafka
+│   │   ├── events/           # Produtor e consumidor Apache Kafka (KRaft)
 │   │   ├── feed/             # Serviço híbrido de timeline (Redis ZSET + Postgres fallback)
 │   │   ├── media/            # Gerador de S3 Presigned URLs e processador FFmpeg
 │   │   ├── momentos/         # Stories de 24h efêmeros com agrupamento por autor
+│   │   ├── notifications/    # Central de alertas com contadores para badges
 │   │   ├── push/             # Integração Firebase Cloud Messaging (FCM)
-│   │   └── realtime/         # Hub de WebSockets com suporte a ping/pong
+│   │   ├── realtime/         # Hub de WebSockets com suporte a ping/pong
+│   │   └── users/            # Perfil do usuário e cálculo dinâmico de conexões
 │   ├── migrations/           # Scripts SQL (000001_init_schema, 000002_seed_data)
 │   └── pkg/response/         # Padronizador de respostas JSON da API
 ├── mobile/                   # Aplicativo Mobile Flutter + Dart (iOS / Android)
-│   ├── lib/
-│   │   ├── core/             # Modelos, tema Apple HIG, cliente Dio HTTP e Riverpod
-│   │   └── features/
-│   │       ├── auth/         # Autenticação com Supabase
-│   │       ├── chat/         # Chats diretos e solicitações
-│   │       ├── communities/  # Comunidades calmas temáticas
-│   │       ├── composer/     # Publicador de pensamentos, artigos, código e áudio
-│   │       ├── feed/         # Feed de Conexões e Radar com reações táteis e comentários
-│   │       ├── momentos/     # Stories estilo Instagram (tela cheia, progresso, reações)
-│   │       ├── navigation/   # Shell de navegação nativa inferior
-│   │       └── notifications/# Centro de notificações e solicitações de conexão
-│   └── test/                 # Testes unitários do aplicativo
+│   ├── android/              # Plataforma nativa Android 14 (API 34)
+│   ├── ios/                  # Plataforma nativa iOS 14.0+ (Apple HIG)
+│   ├── lib/                  # Código do app (Riverpod, Dio, GoRouter, telas calmas)
+│   └── test/                 # Testes unitários dos modelos
 ├── deploy/                   # Infraestrutura e Implantação
 │   ├── docker/               # Dockerfiles multi-stage para API e Worker
 │   ├── docker-compose.yml    # Ambiente completo local (Postgres, Redis, Kafka, MinIO, OTel)
+│   ├── .env                  # Variáveis de ambiente locais
 │   └── k8s/base/             # Manifestos Kubernetes (Deployments, HPA, Services, Ingress)
 ├── scripts/                  # Scripts de automação para desenvolvedores
 │   ├── dev-up.ps1 / dev-up.sh# Inicialização completa da infraestrutura com 1 comando
 │   └── dev-down.ps1 / dev-down.sh
+├── DEPLOY_EASYPANEL.md       # 📖 Guia de Deploy em Produção Real com VPS & Easypanel
 └── .github/workflows/        # CI/CD automatizado (Go & Flutter)
 ```
 
@@ -125,12 +131,19 @@ flutter run
 |---|---|---|
 | `GET` | `/health` | Verificação de integridade dos serviços |
 | `GET` | `/ws` | Conexão WebSocket para chats e notificações |
-| `GET` | `/api/v1/feed?filter=connections` | Obter timeline (prioriza Redis ZSET, fallback Postgres) |
+| `GET` | `/api/v1/feed` | Obter timeline (prioriza Redis ZSET, fallback Postgres) |
 | `POST` | `/api/v1/posts` | Criar nova publicação (dispara evento Kafka `post.created`) |
 | `POST` | `/api/v1/posts/{id}/react` | Reagir a um post (❤️ curtida, 👏 parabéns, 💡 genial, etc.) |
+| `GET` | `/api/v1/posts/{id}/comments` | Listar respostas e comentários do post |
+| `POST` | `/api/v1/posts/{id}/comments` | Publicar resposta aprofundada |
 | `GET` | `/api/v1/momentos` | Listar momentos ativos das últimas 24 horas agrupados por autor |
 | `POST` | `/api/v1/momentos` | Publicar um novo story efêmero |
 | `POST` | `/api/v1/media/presign-upload` | Gerar URL pré-assinada S3 para upload direto |
+| `GET` | `/api/v1/connections` | Listar conexões ativas ou solicitações pendentes |
+| `POST` | `/api/v1/connections/request` | Enviar solicitação de conexão (com nota reflexiva até 140 chars) |
+| `POST` | `/api/v1/connections/{id}/accept` | Aceitar solicitação de conexão |
+| `GET` | `/api/v1/notifications` | Listar notificações do usuário |
+| `GET` | `/api/v1/users/me` | Obter perfil do usuário autenticado |
 | `GET` | `/api/v1/conversations` | Listar conversas ativas e solicitações |
 | `POST` | `/api/v1/conversations/{id}/messages` | Enviar mensagem direta |
 
