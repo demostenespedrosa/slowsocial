@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
+import 'chat_room_screen.dart';
+
 
 class ConversationModel {
   final String id;
@@ -159,86 +161,100 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
               itemBuilder: (context, index) {
                 final c = items[index];
 
-                return Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 24,
-                        backgroundImage: NetworkImage(c.partnerAvatar),
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ChatRoomScreen(
+                          conversationId: c.id,
+                          partnerName: c.partnerName,
+                          partnerAvatar: c.partnerAvatar,
+                        ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  c.partnerName,
-                                  style: TextStyle(
-                                    fontSize: 14.5,
-                                    fontWeight: c.unread ? FontWeight.bold : FontWeight.w600,
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 24,
+                          backgroundImage: NetworkImage(c.partnerAvatar),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    c.partnerName,
+                                    style: TextStyle(
+                                      fontSize: 14.5,
+                                      fontWeight: c.unread ? FontWeight.bold : FontWeight.w600,
+                                    ),
                                   ),
-                                ),
+                                  Text(
+                                    c.timeAgo,
+                                    style: TextStyle(
+                                      fontSize: 11.5,
+                                      color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (c.subject != null) ...[
+                                const SizedBox(height: 2),
                                 Text(
-                                  c.timeAgo,
-                                  style: TextStyle(
-                                    fontSize: 11.5,
-                                    color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                                  'Assunto: ${c.subject}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.lilacPrimary,
                                   ),
                                 ),
                               ],
-                            ),
-                            if (c.subject != null) ...[
-                              const SizedBox(height: 2),
+                              const SizedBox(height: 4),
                               Text(
-                                'Assunto: ${c.subject}',
+                                c.lastMessage,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.lilacPrimary,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: c.unread
+                                    ? (isDark ? Colors.white : Colors.black)
+                                    : (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary),
                                 ),
                               ),
                             ],
-                            const SizedBox(height: 4),
-                            Text(
-                              c.lastMessage,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: c.unread
-                                    ? (isDark ? Colors.white : Colors.black)
-                                    : (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (c.unread)
-                        Container(
-                          width: 8,
-                          height: 8,
-                          margin: const EdgeInsets.only(left: 8),
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.lilacPrimary,
                           ),
                         ),
-                    ],
+                        if (c.unread)
+                          Container(
+                            width: 8,
+                            height: 8,
+                            margin: const EdgeInsets.only(left: 8),
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.lilacPrimary,
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 );
+
               },
             ),
           ),

@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import '../../core/models/momento.dart';
 import '../../core/models/post.dart';
 import '../../core/theme/app_theme.dart';
+import '../composer/composer_screen.dart';
+import '../momentos/widgets/momento_recorder_screen.dart';
 import '../momentos/widgets/momentos_bar.dart';
+import 'widgets/comments_sheet.dart';
 import 'widgets/post_card.dart';
+
 
 class FeedScreen extends StatefulWidget {
   const FeedScreen({super.key});
@@ -158,11 +162,12 @@ class _FeedScreenState extends State<FeedScreen> {
             MomentosBar(
               groups: _mockMomentos,
               onAddMomento: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Abrir gravador de Momento')),
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const MomentoRecorderScreen()),
                 );
               },
             ),
+
 
             // 2. Seletor de Abas (Conexões / Radar)
             Padding(
@@ -210,15 +215,29 @@ class _FeedScreenState extends State<FeedScreen> {
                   );
                 },
                 onCommentTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Abrir comentários')),
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (_) => CommentsBottomSheet(postId: post.id),
                   );
                 },
               );
+
             }),
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const ComposerScreen()),
+          );
+        },
+        backgroundColor: AppColors.lilacPrimary,
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
     );
   }
 }
+
